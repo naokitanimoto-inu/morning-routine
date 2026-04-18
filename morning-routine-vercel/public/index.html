@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="あさのじゅんび">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FFF8E1">
+<title>あさのじゅんび</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi44GC44GV44Gu44GY44KF44KT44GzIiwic2hvcnRfbmFtZSI6IuOBguOBleOBruOBmOOCheOCk+OBsyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjRkZGOEUxIiwidGhlbWVfY29sb3IiOiIjRkZGOEUxIn0=">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Dela+Gothic+One&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-normal: linear-gradient(135deg, #E8F5FD 0%, #FFF8E1 40%, #FCE4EC 100%);
+    --bg-done: linear-gradient(135deg, #FFF3E0 0%, #FFECB3 30%, #FFE0B2 60%, #FFCC80 100%);
+  }
+
+  html, body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body {
+    font-family: 'Kosugi Maru', 'Hiragino Maru Gothic Pro', 'Rounded Mplus 1c', sans-serif;
+    background: var(--bg-normal);
+    transition: background 1s ease;
+    padding: 16px;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  body.all-done {
+    background: var(--bg-done);
+  }
+
+  /* Animations */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  @keyframes bounce {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.15); }
+    50% { transform: scale(0.95); }
+    70% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  @keyframes completePop {
+    0% { transform: scale(1); }
+    20% { transform: scale(1.12) rotate(-2deg); }
+    40% { transform: scale(0.94) rotate(2deg); }
+    60% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+  @keyframes celebrationBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* Stars */
+  .star {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(255, 200, 50, 0.5);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+    animation: slideUp 0.6s ease-out;
+    position: relative;
+    z-index: 1;
+  }
+  .header-emoji {
+    font-size: 22px;
+    margin-bottom: 6px;
+    animation: float 3s ease-in-out infinite;
+  }
+  .header h1 {
+    font-family: 'Dela Gothic One', 'Kosugi Maru', sans-serif;
+    font-size: clamp(22px, 6vw, 32px);
+    color: #5D4037;
+    letter-spacing: 2px;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    transition: color 0.5s;
+  }
+  .header h1.done-title { color: #E65100; }
+  .header p {
+    font-size: 13px;
+    color: #8D6E63;
+  }
+
+  /* Timer */
+  .timer-box {
+    background: rgba(255,255,255,0.85);
+    border-radius: 20px;
+    padding: 14px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 2px solid rgba(255,255,255,0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.4s ease;
+    position: relative;
+    z-index: 1;
+  }
+  .timer-box.urgent {
+    background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+    border-color: #EF9A9A;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  .timer-box.complete {
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border-color: #A5D6A7;
+  }
+  .timer-label {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .timer-digits {
+    font-family: 'Dela Gothic One', monospace;
+    font-size: clamp(34px, 10vw, 50px);
+    font-weight: 900;
+    color: #37474F;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .timer-digits.urgent { color: #C62828; }
+  .timer-digits.complete { color: #2E7D32; }
+
+  /* Progress */
+  .progress-track {
+    background: rgba(255,255,255,0.6);
+    border-radius: 30px;
+    height: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+    border: 2px solid rgba(255,255,255,0.8);
+    z-index: 1;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 30px;
+    background: linear-gradient(90deg, #FFD54F, #FFAB40, #FF7043);
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .progress-fill.rainbow {
+    background: linear-gradient(90deg, #FFD54F, #FF8A65, #FF5252, #FF4081, #AB47BC, #42A5F5, #66BB6A);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+  .progress-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    padding-right: 10px;
+  }
+  .progress-text-outside {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    font-weight: 600;
+    color: #999;
+  }
+
+  /* Tasks */
+  .tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .task-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    border: 2.5px solid rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.8);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .task-btn:active {
+    transform: scale(0.97);
+  }
+  .task-btn.done {
+    box-shadow: 0 4px 16px var(--task-shadow);
+  }
+  .task-btn.animating {
+    animation: completePop 0.6s ease;
+  }
+
+  .task-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+  .task-circle .check {
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  .task-label {
+    font-size: clamp(16px, 4.5vw, 20px);
+    font-weight: 700;
+    color: #5D4037;
+    transition: color 0.3s;
+  }
+
+  .task-done-emoji {
+    margin-left: auto;
+    font-size: 22px;
+    animation: bounce 0.5s ease;
+  }
+
+  /* Celebration */
+  .celebration {
+    text-align: center;
+    margin-top: 24px;
+    animation: slideUp 0.5s ease-out;
+    position: relative;
+    z-index: 1;
+  }
+  .celebration .trophy {
+    font-size: clamp(48px, 15vw, 72px);
+    animation: celebrationBounce 0.8s ease infinite;
+    margin-bottom: 8px;
+  }
+  .celebration h2 {
+    font-family: 'Dela Gothic One', 'Kosugi Maru', sans-serif;
+    font-size: clamp(18px, 5vw, 24px);
+    color: #E65100;
+    margin-bottom: 4px;
+  }
+  .celebration p {
+    font-size: 14px;
+    color: #8D6E63;
+  }
+
+  /* Reset */
+  .reset-area {
+    text-align: center;
+    margin-top: 24px;
+    padding-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .reset-btn {
+    background: rgba(255,255,255,0.6);
+    border: 2px solid rgba(0,0,0,0.08);
+    border-radius: 14px;
+    padding: 10px 28px;
+    font-family: 'Kosugi Maru', sans-serif;
+    font-size: 14px;
+    color: #999;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reset-btn:active { opacity: 0.7; }
+
+  .confetti-piece {
+    position: fixed;
+    border-radius: 2px;
+    z-index: 9999;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div class="header">
+  <div class="header-emoji" id="headerEmoji">🌅✨</div>
+  <h1 id="headerTitle">あさのじゅんび</h1>
+  <p id="headerSub">ぜんぶできるかな？</p>
+</div>
+
+<div class="timer-box" id="timerBox">
+  <div class="timer-label">8:15 まであと</div>
+  <div class="timer-digits" id="timerDigits">--:--</div>
+</div>
+
+<div class="progress-track">
+  <div class="progress-fill" id="progressFill" style="width:0%">
+    <span class="progress-text" id="progressTextInside" style="display:none"></span>
+  </div>
+  <span class="progress-text-outside" id="progressTextOutside">0/7</span>
+</div>
+
+<div class="tasks" id="taskList"></div>
+
+<div class="celebration" id="celebration" style="display:none">
+  <div class="trophy">🏆</div>
+  <h2>ぜんぶできたね！</h2>
+  <p>きょうもがんばったね ⭐</p>
+</div>
+
+<div class="reset-area">
+  <button class="reset-btn" onclick="resetAll()">🔄 リセット</button>
+</div>
+
+<div id="confettiContainer"></div>
+
+<script>
+const TASKS = [
+  { id: 1, label: "おきる", emoji: "☀️", color: "#FF9843" },
+  { id: 2, label: "あさごはん", emoji: "🍚", color: "#4CAF50" },
+  { id: 3, label: "おきがえ", emoji: "👗", color: "#E91E8A" },
+  { id: 4, label: "トイレ", emoji: "🚽", color: "#8D6E63" },
+  { id: 5, label: "はみがき", emoji: "🪥", color: "#00BCD4" },
+  { id: 6, label: "ヘアセット", emoji: "💇‍♀️", color: "#9C27B0" },
+  { id: 7, label: "くつしたをはく", emoji: "🧦", color: "#FF5722" },
+];
+
+const DEADLINE_H = 8, DEADLINE_M = 15;
+const STORAGE_KEY = "morning_routine_state";
+
+let completed = {};
+let prevAllDone = false;
+
+// Load state from localStorage
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const savedDate = parsed.date;
+      const today = new Date().toDateString();
+      if (savedDate === today) {
+        completed = parsed.completed || {};
+      } else {
+        completed = {};
+        saveState();
+      }
+    }
+  } catch(e) { completed = {}; }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      date: new Date().toDateString(),
+      completed
+    }));
+  } catch(e) {}
+}
+
+// Stars background
+function createStars() {
+  const container = document.getElementById("stars");
+  for (let i = 0; i < 20; i++) {
+    const star = document.createElement("div");
+    star.className = "star";
+    const size = Math.random() * 8 + 4;
+    star.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      width:${size}px;height:${size}px;
+      animation:twinkle ${Math.random()*2+2}s ease-in-out ${Math.random()*3}s infinite;
+    `;
+    container.appendChild(star);
+  }
+}
+
+// Render tasks
+function renderTasks() {
+  const list = document.getElementById("taskList");
+  list.innerHTML = "";
+  TASKS.forEach((task, idx) => {
+    const done = !!completed[task.id];
+    const btn = document.createElement("button");
+    btn.className = "task-btn" + (done ? " done" : "");
+    btn.style.setProperty("--task-shadow", task.color + "30");
+    if (done) {
+      btn.style.borderColor = task.color;
+      btn.style.background = `linear-gradient(135deg, ${task.color}18, ${task.color}08)`;
+    }
+    btn.style.animation = `slideUp 0.4s ease-out ${idx * 0.06}s both`;
+
+    // Circle
+    const circle = document.createElement("div");
+    circle.className = "task-circle";
+    if (done) {
+      circle.style.background = `linear-gradient(135deg, ${task.color}, ${task.color}CC)`;
+      circle.style.boxShadow = `0 3px 10px ${task.color}40`;
+      circle.innerHTML = `<span class="check">✓</span>`;
+    } else {
+      circle.style.background = `linear-gradient(135deg, ${task.color}20, ${task.color}10)`;
+      circle.style.border = `2.5px dashed ${task.color}60`;
+      circle.textContent = task.emoji;
+    }
+
+    // Label
+    const label = document.createElement("span");
+    label.className = "task-label";
+    label.textContent = task.label;
+    if (done) label.style.color = task.color;
+
+    btn.appendChild(circle);
+    btn.appendChild(label);
+
+    if (done) {
+      const doneEmoji = document.createElement("span");
+      doneEmoji.className = "task-done-emoji";
+      doneEmoji.textContent = task.emoji;
+      btn.appendChild(doneEmoji);
+    }
+
+    btn.addEventListener("click", () => toggleTask(task.id));
+    list.appendChild(btn);
+  });
+}
+
+function toggleTask(id) {
+  if (completed[id]) {
+    delete completed[id];
+  } else {
+    completed[id] = true;
+    // Find button and animate
+    const buttons = document.querySelectorAll(".task-btn");
+    const idx = TASKS.findIndex(t => t.id === id);
+    if (buttons[idx]) {
+      buttons[idx].classList.add("animating");
+      setTimeout(() => buttons[idx].classList.remove("animating"), 700);
+    }
+  }
+  saveState();
+  renderTasks();
+  updateUI();
+}
+
+function updateUI() {
+  const allDone = TASKS.every(t => completed[t.id]);
+  const completedCount = TASKS.filter(t => completed[t.id]).length;
+  const progress = completedCount / TASKS.length;
+
+  // Body background
+  document.body.classList.toggle("all-done", allDone);
+
+  // Header
+  const emoji = document.getElementById("headerEmoji");
+  const title = document.getElementById("headerTitle");
+  const sub = document.getElementById("headerSub");
+
+  const now = new Date();
+  const deadline = new Date(now);
+  deadline.setHours(DEADLINE_H, DEADLINE_M, 0, 0);
+  if (now > deadline) deadline.setDate(deadline.getDate() + 1);
+  const diff = Math.max(0, deadline - now);
+  const mins = Math.floor(diff / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  const isUrgent = mins < 10 && !allDone;
+
+  if (allDone) {
+    emoji.textContent = "🎉🌈✨";
+    title.textContent = "かんぺき！";
+    title.classList.add("done-title");
+    sub.textContent = "すごいね！おでかけできるよ！";
+  } else {
+    emoji.textContent = isUrgent ? "⏰💨" : "🌅✨";
+    title.textContent = "あさのじゅんび";
+    title.classList.remove("done-title");
+    sub.textContent = "ぜんぶできるかな？";
+  }
+
+  // Timer
+  const timerBox = document.getElementById("timerBox");
+  const timerDigits = document.getElementById("timerDigits");
+  timerBox.className = "timer-box" + (allDone ? " complete" : isUrgent ? " urgent" : "");
+  timerDigits.className = "timer-digits" + (allDone ? " complete" : isUrgent ? " urgent" : "");
+  timerDigits.textContent = allDone ? "✅" : `${String(mins).padStart(2,"0")}:${String(secs).padStart(2,"0")}`;
+
+  // Progress
+  const fill = document.getElementById("progressFill");
+  const textIn = document.getElementById("progressTextInside");
+  const textOut = document.getElementById("progressTextOutside");
+  fill.style.width = `${progress * 100}%`;
+  fill.className = "progress-fill" + (allDone ? " rainbow" : "");
+
+  if (progress > 0.15) {
+    textIn.style.display = "";
+    textIn.textContent = `${completedCount}/${TASKS.length}`;
+    textOut.style.display = "none";
+  } else {
+    textIn.style.display = "none";
+    textOut.style.display = "";
+    textOut.textContent = `${completedCount}/${TASKS.length}`;
+  }
+
+  // Celebration
+  const celeb = document.getElementById("celebration");
+  celeb.style.display = allDone ? "" : "none";
+
+  // Confetti on transition
+  if (allDone && !prevAllDone) {
+    launchConfetti();
+  }
+  prevAllDone = allDone;
+}
+
+function launchConfetti() {
+  const container = document.getElementById("confettiContainer");
+  container.innerHTML = "";
+  const colors = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF","#FF78C4","#A66CFF"];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    const color = colors[i % colors.length];
+    const size = Math.random() * 8 + 4;
+    const duration = Math.random() * 1.5 + 2;
+    const delay = Math.random() * 0.5;
+    piece.style.cssText = `
+      left:${Math.random()*100}%;top:-10px;
+      width:${size}px;height:${size*1.4}px;
+      background:${color};
+      transform:rotate(${Math.random()*360}deg);
+      animation:confettiFall ${duration}s ease-in ${delay}s forwards;
+    `;
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.innerHTML = "", 5000);
+}
+
+function resetAll() {
+  completed = {};
+  saveState();
+  renderTasks();
+  updateUI();
+  document.getElementById("confettiContainer").innerHTML = "";
+}
+
+// Init
+loadState();
+createStars();
+renderTasks();
+updateUI();
+setInterval(updateUI, 1000);
+</script>
+</body>
+</html>
